@@ -5,7 +5,7 @@ for Joomla Forms Framework
 
 need JB library
 
-v 2014.12.14.1952
+v 2015.01.29.1131
 
 */
 
@@ -110,11 +110,13 @@ JB_FV = function(form,v_o){
 					vo=JB.is.number(val);
 				}else if(va[3]=='pdbl'){
 					vo=JB.is.number(val);
+					val=String(val).replace(',','.');
 					if(vo){
 						vo=((val*1)>=0);
 					}
 				}else if(va[3]=='ppdbl'){
 					vo=JB.is.number(val);
+					val=String(val).replace(',','.');
 					if(vo){
 						vo=((val*1)>0);
 					}
@@ -197,7 +199,7 @@ JB_FV = function(form,v_o){
 		this.vld=v_o;
 		if(typeof form=='string'){
 			v_f=Q(form);
-			if(v_f.length!=1){
+			if(v_f.length==0){
 				return false;
 			}
 		}else{
@@ -206,51 +208,59 @@ JB_FV = function(form,v_o){
 		var e,a,x,ii,tp,tl,alid,xid;
 		var v=v_o.validate;
 		
-		v_f[0].valid=this.validate_form.bind(this,v_f[0],true);
-		
-		v_f.submit(this.onsubmitcheck.bind(v_f[0]));
-		
-		for(elid=0;elid<v.field.length;elid++){
-			el=v.field[elid];
-			a='[name="'+v.fields+'['+el[0]+']"]';
-			e=v_f.find(a);
-			if(e.length>0){
-				for(xid=0;xid<e.length;xid++){
-					x=e[xid];
-					x.JB_VF=el;
-					x.onkeyup=this.validate_el.bind(x,this);
-					x.onchange=this.validate_el.bind(x,this);
-					x.valid=this.validate_el.bind(x,this);
-					ii=JB.x.cel('img',{app:false,csN:'JB_VF_infoico'});
-					ii.src=JB_VF_default.infoico_src;
-					x.parentNode.insertBefore(ii,x.nextSibling); //insert after x
-					x.JB_VF_infoicon=ii;
-					Q(ii).hide();
-					
-					if(el[1]=='t'){
-						tp=el[3];
-						tl='';
-						if(/^tx/.test(tp)){
-							tp='tx';
-							tl=String(el[3]).replace(/^tx/,'');
-						}
-						x=JB_VF_default.msgs[tp];
-						if(!JB.is.und(x)){
-							ii.title=x+tl;
-						}
-					}else if(el[1]=='f'){
-						if(el.length>4){
-							x=el[4];
-							x=v_o.messages[x];
+		for(frm=0;frm<v_f.length;frm++){
+			v_f[frm].valid=this.validate_form.bind(this,v_f[frm],true);
+			
+			Q(v_f[frm]).submit(this.onsubmitcheck.bind(v_f[frm]));
+			
+			for(elid=0;elid<v.field.length;elid++){
+				el=v.field[elid];
+				a='[name="'+v.fields+'['+el[0]+']"]';
+				e=Q(v_f[frm]).find(a);
+				if(e.length>0){
+					for(xid=0;xid<e.length;xid++){
+						x=e[xid];
+						x.JB_VF=el;
+						x.onkeyup=this.validate_el.bind(x,this);
+						x.onchange=this.validate_el.bind(x,this);
+						x.valid=this.validate_el.bind(x,this);
+						ii=JB.x.cel('img',{app:false,csN:'JB_VF_infoico'});
+						ii.src=JB_VF_default.infoico_src;
+						x.parentNode.insertBefore(ii,x.nextSibling); //insert after x
+						x.JB_VF_infoicon=ii;
+						Q(ii).hide();
+						
+						if(el[1]=='t'){
+							tp=el[3];
+							tl='';
+							if(/^tx/.test(tp)){
+								tp='tx';
+								tl=String(el[3]).replace(/^tx/,'');
+							}
+							x=JB_VF_default.msgs[tp];
+							if(el.length>4){
+								//default zpráva může být přepsána
+								if(!JB.is.und(v_o.messages))
+									if(!JB.is.und(v_o.messages[el[4]]))
+										x=v_o.messages[el[4]];
+							}	
 							if(!JB.is.und(x)){
-								ii.title=x;
+								ii.title=x+tl;
+							}
+						}else if(el[1]=='f'){
+							if(el.length>4){
+								x=el[4];
+								x=v_o.messages[x];
+								if(!JB.is.und(x)){
+									ii.title=x;
+								}
 							}
 						}
 					}
 				}
 			}
+			this.validate_form(v_f[frm],false);
 		}
-		this.validate_form(v_f[0],false);
 		try{
 			var myTips = new Tips('.JB_VF_infoico');
 		}catch(e){
